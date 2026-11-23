@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aniriame</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 36'%3E%3Cpath d='M7 31 L19 6 L31 31' fill='none' stroke='%23A8402A' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M11.4 22 Q19 29.5 26.6 22' fill='none' stroke='%23D99A2B' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='36' cy='10' r='3.5' fill='%23D99A2B'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#F4E6D3;--panel:#FFF8EE;--ink:#3B2417;--muted:#6E5642;--line:#DDC3A5;--accent:#A8402A;--on:#FFF8EE;--ocre:#D99A2B;--amber:#8A5200;--tinta:#3B2417;--warn:#A3261C;--ok:#4F6B2F}
+@media (prefers-color-scheme:dark){:root{--bg:#2A1810;--panel:#3A2418;--ink:#F6E7D2;--muted:#CDB296;--line:#5B3D2C;--accent:#E8825C;--on:#2A1810;--ocre:#E3A03A;--amber:#F0B955;--tinta:#2A1810;--warn:#FF9B8A;--ok:#B5D08A}}
+*{box-sizing:border-box}
+body{border-top:6px solid var(--accent);margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:16px 20px 48px}
+h1{font:400 30px Georgia,serif;margin:0;line-height:1.1}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
+.ajustes{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 16px;font-size:14px;color:var(--muted)}
+.ajustes label{display:flex;flex-direction:column;gap:2px}
+nav{display:flex;gap:8px;margin-bottom:16px}
+button,select,input,textarea{font:inherit;color:var(--ink)}
+input,select,textarea{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{resize:vertical}
+button{cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--panel);padding:8px 16px}
+button.on,button.go{background:var(--accent);color:var(--on);border-color:var(--accent);font-weight:600}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin:12px 0}
+.badge{display:inline-block;font-size:13px;border-radius:99px;padding:2px 10px;border:1px solid var(--line)}
+.ref{color:var(--ok)}.bor{color:var(--amber)}
+.es{color:var(--muted);margin:8px 0}
+.err{color:var(--warn);min-height:24px;margin:8px 0}
+.aviso{background:var(--panel);border:1px solid var(--amber);color:var(--amber);border-radius:8px;padding:8px 12px;font-size:14px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.num{font:400 32px Georgia,serif}
+.fila{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.fila select{width:auto}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.dos{grid-template-columns:1fr}}
+.estrellas{display:inline-flex;gap:2px}
+.estrellas button{border:0;background:none;padding:2px 4px;font-size:30px;line-height:1;color:var(--muted)}
+.estrellas button.lleno{color:var(--amber)}
+.ok{color:var(--ok);min-height:24px;margin:8px 0}
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:20px;max-width:440px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+a.boton{display:inline-block;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--panel);padding:8px 16px;color:var(--ink);text-decoration:none}
+.top{padding:12px 0}
+.logo{display:flex;align-items:center;gap:12px}
+.marca{width:52px;height:auto;flex:none}
+.lema{font-size:13px;color:var(--muted);letter-spacing:.05em}
+.ani-bloque{display:flex;align-items:center;gap:16px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 20px;margin-bottom:16px}
+.ani{width:104px;height:auto;flex:none}
+.ani-bloque p{margin:0}
+.onda{opacity:.3}
+.hablando .onda{animation:onda 1s ease-in-out infinite}
+.hablando .onda2{animation-delay:.25s}
+@keyframes onda{0%,100%{opacity:.25}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.hablando .onda{animation:none;opacity:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">
+      <svg class="marca" viewBox="0 0 44 36" aria-hidden="true"><path d="M7 31 L19 6 L31 31" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.4 22 Q19 29.5 26.6 22" fill="none" stroke="var(--ocre)" stroke-width="4" stroke-linecap="round"/><circle cx="36" cy="10" r="3.5" fill="var(--ocre)"/></svg>
+      <div><h1>Aniriame</h1><span class="lema">Traducción comunitaria</span></div>
+    </div>
+    <span id="estado" class="badge">Conectando…</span>
+  </header>
+  <div id="aviso-motor" class="aviso" hidden>El motor de traducción es solo una prueba: todavía no traduce a rarámuri. Sirve para probar el flujo de revisión.</div>
+
+  <div class="ajustes">
+    <label>Tu nombre (para firmar revisiones)<input id="revisor" autocomplete="off"></label>
+    <label>Clave de acceso (si la hay)<input id="token" type="password" autocomplete="off"></label>
+  </div>
+
+  <nav>
+    <button class="on" data-v="traducir">Traducir</button>
+    <button data-v="revisar">Revisar</button>
+    <button data-v="entrenar">Entrenar</button>
+    <button data-v="indicadores">Indicadores</button>
+  </nav>
+
+  <section id="v-traducir" class="vista">
+    <div class="ani-bloque">
+      <svg class="ani" viewBox="0 0 150 120" role="img" aria-label="Ani, la asistente">
+        <circle cx="60" cy="60" r="50" fill="var(--ocre)"/>
+        <circle cx="40" cy="70" r="7" fill="var(--accent)" fill-opacity=".35"/>
+        <circle cx="80" cy="70" r="7" fill="var(--accent)" fill-opacity=".35"/>
+        <ellipse cx="45" cy="52" rx="5" ry="7" fill="var(--tinta)"/>
+        <ellipse cx="75" cy="52" rx="5" ry="7" fill="var(--tinta)"/>
+        <path d="M46 74 Q60 88 74 74" fill="none" stroke="var(--tinta)" stroke-width="4" stroke-linecap="round"/>
+        <path class="onda" d="M116 44 Q126 60 116 76" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>
+        <path class="onda onda2" d="M130 34 Q146 60 130 86" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>
+      </svg>
+      <p>Hola, soy Ani. Pega un texto o sube un archivo y te preparo un borrador para que una persona hablante lo revise.</p>
+    </div>
+    <div id="avisos-archivo" class="aviso" hidden></div>
+    <textarea id="texto" rows="7" placeholder="Pega aquí el texto en español. Cada párrafo se traduce por separado." aria-label="Texto en español"></textarea>
+    <div class="dos" style="margin-top:12px">
+      <input id="doc" placeholder="Nombre del documento (opcional)" aria-label="Documento">
+      <input id="area" placeholder="Área, por ejemplo convocatorias (opcional)" aria-label="Área">
+    </div>
+    <div class="fila">
+      <button class="go" id="go">Traducir</button>
+      <label>Cargar archivo (.pdf, .docx o .txt) <input id="archivo" type="file" accept=".pdf,.docx,.txt" style="display:none"><button type="button" id="btn-archivo">Elegir archivo</button></label>
+    </div>
+    <p class="err" id="err" role="alert"></p>
+    <div id="resultados"></div>
+  </section>
+
+  <section id="v-revisar" class="vista" hidden>
+    <button id="actualizar">Actualizar lista</button>
+    <p class="err" id="err2" role="alert"></p>
+    <div id="pendientes"></div>
+  </section>
+
+  <section id="v-entrenar" class="vista" hidden>
+    <p class="es">Agrega aquí pares de párrafos que ya estén traducidos y revisados por una persona hablante. Entran a la base de datos y ayudan a traducir mejor lo que se les parezca.</p>
+    <div class="dos">
+      <input id="doc-ent" placeholder="Documento de origen (opcional)" aria-label="Documento de origen">
+      <input id="area-ent" placeholder="Área, por ejemplo convocatorias (opcional)" aria-label="Área">
+    </div>
+    <div class="card">
+      <strong>¿Tienes muchas traducciones?</strong>
+      <p class="es" style="margin:4px 0 8px;font-size:14px">Descarga la plantilla, llénala sin cambiar los nombres de las columnas (texto_es y texto_rar), con un par por fila (un párrafo o una oración), y súbela con "Cargar Excel o CSV".</p>
+      <div class="fila"><a class="boton" id="bajar-xlsx" download>Descargar plantilla Excel</a><a class="boton" id="bajar-csv" download>Ejemplo CSV</a></div>
+    </div>
+    <div id="lista-pares"></div>
+    <div class="fila">
+      <button type="button" id="mas-par">Agregar otro par</button>
+      <button type="button" id="btn-csv">Cargar Excel o CSV</button>
+      <input id="csv" type="file" accept=".csv,.xlsx" style="display:none">
+      <button type="button" id="vaciar">Vaciar lista</button>
+    </div>
+    <p class="es" style="font-size:14px">El Excel o CSV debe tener las columnas texto_es y texto_rar (el CSV puede traer también documento y area). Máximo 500 pares por carga.</p>
+    <div class="card">
+      <strong>Nivel de confianza</strong>
+      <div id="caja-confianza"></div>
+      <p class="es" id="hint-confianza" style="margin:4px 0 0;font-size:14px"></p>
+    </div>
+    <div class="fila"><button class="go" id="btn-entrenar">Revisar y agregar a la base</button></div>
+    <p class="err" id="err3" role="alert"></p>
+    <p class="ok" id="ok3" role="status"></p>
+  </section>
+
+  <section id="v-indicadores" class="vista" hidden>
+    <button id="recargar">Actualizar indicadores</button>
+    <div id="ind" style="margin-top:12px"></div>
+  </section>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlg-titulo">
+  <form method="dialog">
+    <h2 id="dlg-titulo" style="font:400 22px Georgia,serif;margin:0 0 8px">¿Agregar a la base de datos?</h2>
+    <div id="dlg-texto"></div>
+    <div class="fila" style="justify-content:flex-end">
+      <button value="no">Cancelar</button>
+      <button value="si" class="go">Sí, agregar a la base</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const API = location.protocol === "file:" ? "http://127.0.0.1:8000" : "";
+const $ = s => document.querySelector(s);
+const guardar = { get(k){ try { return localStorage.getItem(k) || ""; } catch(e){ return ""; } },
+                  set(k,v){ try { localStorage.setItem(k,v); } catch(e){} } };
+function h(tag, props = {}, ...kids){ const e = document.createElement(tag); Object.assign(e, props); kids.flat().forEach(k => e.append(k)); return e; }
+
+async function api(ruta, opciones = {}){
+  const headers = { "Content-Type": "application/json" };
+  if (opciones.body instanceof FormData) delete headers["Content-Type"];
+  if ($("#token").value) headers["X-Token"] = $("#token").value;
+  let r;
+  try { r = await fetch(API + ruta, { ...opciones, headers }); }
+  catch(e){ throw new Error("No se pudo conectar con el servidor. ¿Está encendido?"); }
+  if (!r.ok){
+    let d = ""; try { d = (await r.json()).detail; } catch(e){}
+    throw new Error(r.status === 401 ? "Falta la clave de acceso o es incorrecta." : (d || "Error " + r.status));
+  }
+  return r.json();
+}
+
+// Ajustes guardados en este navegador
+$("#revisor").value = guardar.get("revisor"); $("#token").value = guardar.get("token");
+$("#revisor").onchange = () => guardar.set("revisor", $("#revisor").value);
+$("#token").onchange = () => guardar.set("token", $("#token").value);
+
+// Estado del servidor
+api("/").then(d => {
+  $("#estado").textContent = "Conectado · motor: " + d.motor;
+  const prueba = d.motor.includes("sin motor");
+  $("#aviso-motor").textContent = prueba
+    ? "El motor de traducción es solo una prueba: todavía no traduce a rarámuri. Sirve para probar el flujo de revisión."
+    : "Los borradores los genera un servicio externo (" + d.motor + "): los textos salen de este equipo. No uses documentos confidenciales. Toda traducción debe revisarla una persona hablante.";
+  $("#aviso-motor").hidden = false;
+}).catch(e => { $("#estado").textContent = "Sin conexión"; });
+
+// Pestañas
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll(".vista").forEach(v => v.hidden = v.id !== "v-" + b.dataset.v);
+  if (b.dataset.v === "revisar") cargarPendientes();
+  if (b.dataset.v === "indicadores") cargarIndicadores();
+  if (b.dataset.v === "entrenar" && !$("#lista-pares").children.length) agregarPar();
+});
+
+// Traducir
+function tarjeta(r){
+  const esRef = r.estado === "referencia validada";
+  return h("div", { className: "card" },
+    h("span", { className: "badge " + (esRef ? "ref" : "bor"), textContent: esRef ? "Referencia validada" : "Borrador por revisar" }),
+    h("p", { className: "es", textContent: r.texto_es }),
+    h("p", { textContent: r.texto_rar }),
+    r.aviso ? h("p", { className: "es", style: "font-size:14px", textContent: r.aviso }) : "");
+}
+function dividir(texto){
+  let p = texto.split(/\n\s*\n/).map(x => x.trim()).filter(Boolean);
+  if (p.length <= 1) p = texto.split("\n").map(x => x.trim()).filter(Boolean);
+  return p;
+}
+let traduciendo = false;
+$("#go").onclick = async () => {
+  if (traduciendo) return;
+  const texto = $("#texto").value.trim(), out = $("#resultados");
+  $("#err").textContent = "";
+  if (!texto){ $("#err").textContent = "Escribe o carga un texto primero."; return; }
+  const parrafos = dividir(texto);
+  if (parrafos.length > 30 && !confirm("Este texto tiene " + parrafos.length + " párrafos. Cada uno se envía al motor de traducción y tiene costo. ¿Continuar?")) return;
+  traduciendo = true; $("#go").disabled = true; document.body.classList.add("hablando"); out.replaceChildren();
+  const progreso = h("p", { className: "es" }); out.append(progreso);
+  try {
+    for (let i = 0; i < parrafos.length; i += 5){
+      progreso.textContent = "Traduciendo párrafos " + (i + 1) + " a " + Math.min(i + 5, parrafos.length) + " de " + parrafos.length + "…";
+      const d = await api("/traducir", { method: "POST", body: JSON.stringify({ texto: parrafos.slice(i, i + 5).join("\n\n"), area: $("#area").value || null, documento: $("#doc").value || null }) });
+      progreso.before(...d.resultados.map(tarjeta));
+    }
+    progreso.textContent = "Listo: " + parrafos.length + " párrafo(s). Revisa los borradores en la pestaña Revisar.";
+  } catch(e){
+    $("#err").textContent = e.message + " Lo mostrado arriba ya quedó guardado como borrador.";
+    progreso.remove();
+  } finally { traduciendo = false; $("#go").disabled = false; document.body.classList.remove("hablando"); }
+};
+$("#btn-archivo").onclick = () => $("#archivo").click();
+$("#archivo").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const av = $("#avisos-archivo"); av.hidden = true; $("#err").textContent = "";
+  const fd = new FormData(); fd.append("archivo", f);
+  $("#btn-archivo").textContent = "Leyendo…";
+  try {
+    const d = await api("/extraer", { method: "POST", body: fd });
+    $("#texto").value = d.texto; if (!$("#doc").value) $("#doc").value = f.name;
+    if (d.avisos.length){ av.replaceChildren(...d.avisos.map(a => h("p", { textContent: a, style: "margin:4px 0" }))); av.hidden = false; }
+  } catch(err){ $("#err").textContent = err.message; }
+  finally { $("#btn-archivo").textContent = "Elegir archivo"; e.target.value = ""; }
+};
+
+// Revisar
+function tarjetaRevision(p){
+  const ta = h("textarea", { rows: 3, value: p.texto_rar, ariaLabel: "Traducción (puedes corregirla)" });
+  const sel = estrellas();
+  const msg = h("span", { className: "err" });
+  const card = h("div", { className: "card" },
+    h("p", { className: "es", textContent: p.texto_es }), ta,
+    h("div", { className: "fila" }, sel,
+      h("button", { className: "go", textContent: "Guardar revisión", onclick: async () => {
+        msg.textContent = "";
+        if (!sel.valor){ msg.textContent = "Elige una calificación en estrellas."; return; }
+        if (!$("#revisor").value.trim()){ msg.textContent = "Escribe tu nombre arriba."; return; }
+        const cambio = ta.value.trim() !== p.texto_rar.trim();
+        try {
+          await api("/revisar", { method: "POST", body: JSON.stringify({ par_id: p.id, estrellas: sel.valor, revisor: $("#revisor").value.trim(), correccion: cambio ? ta.value.trim() : null }) });
+          card.remove();
+        } catch(e){ msg.textContent = e.message; }
+      } }), msg));
+  return card;
+}
+async function cargarPendientes(){
+  $("#err2").textContent = "";
+  try {
+    const d = await api("/pendientes");
+    $("#pendientes").replaceChildren(...(d.pendientes.length ? d.pendientes.map(tarjetaRevision) : [h("p", { textContent: "No hay borradores pendientes." })]));
+  } catch(e){ $("#err2").textContent = e.message; }
+}
+$("#actualizar").onclick = cargarPendientes;
+
+// Estrellas de confianza (se usan al revisar y al entrenar)
+function estrellas(alCambiar){
+  const caja = h("div", { className: "estrellas", role: "radiogroup" });
+  caja.setAttribute("aria-label", "Nivel de confianza");
+  caja.valor = 0;
+  const botones = [1, 2, 3, 4, 5].map(n => {
+    const b = h("button", { type: "button", role: "radio", title: n + (n === 1 ? " estrella" : " estrellas") });
+    b.setAttribute("aria-label", b.title);
+    b.onclick = () => { caja.valor = caja.valor === n ? 0 : n; pintar(); if (alCambiar) alCambiar(caja.valor); };
+    return b;
+  });
+  function pintar(){
+    botones.forEach((b, i) => { b.textContent = i < caja.valor ? "★" : "☆"; b.classList.toggle("lleno", i < caja.valor); b.setAttribute("aria-checked", String(i + 1 === caja.valor)); });
+  }
+  caja.append(...botones); pintar();
+  return caja;
+}
+
+// Entrenar: cargar pares ya establecidos
+function textoConfianza(v){
+  return v === 0 ? "Elige un nivel de confianza."
+    : v === 5 ? "Referencia segura: se usará como ejemplo para traducir."
+    : v >= 3 ? "Se guarda, pero no se usa como ejemplo hasta que se confirme."
+    : "Se guarda como pendiente de revisión.";
+}
+const confianza = estrellas(v => { $("#hint-confianza").textContent = textoConfianza(v); });
+$("#caja-confianza").append(confianza);
+$("#hint-confianza").textContent = textoConfianza(0);
+
+function agregarPar(es = "", rar = "", extra = {}){
+  const a = h("textarea", { rows: 3, value: es, placeholder: "Español" });
+  const b = h("textarea", { rows: 3, value: rar, placeholder: "Rarámuri" });
+  a.setAttribute("aria-label", "Texto en español"); b.setAttribute("aria-label", "Texto en rarámuri");
+  const card = h("div", { className: "card" }, h("div", { className: "dos" }, a, b),
+    h("div", { className: "fila" }, h("button", { type: "button", textContent: "Quitar este par", onclick: () => card.remove() })));
+  card.leer = () => ({ texto_es: a.value.trim(), texto_rar: b.value.trim(), documento: extra.documento || null, area: extra.area || null });
+  $("#lista-pares").append(card);
+}
+$("#mas-par").onclick = () => agregarPar();
+$("#vaciar").onclick = () => { $("#lista-pares").replaceChildren(); agregarPar(); };
+
+function leerCSV(t){
+  t = t.replace(/^\uFEFF/, "");
+  const sep = (t.split("\n")[0].match(/;/g) || []).length > (t.split("\n")[0].match(/,/g) || []).length ? ";" : ",";
+  const filas = []; let fila = [], c = "", q = false;
+  for (let i = 0; i < t.length; i++){
+    const x = t[i];
+    if (q){ if (x === '"'){ if (t[i + 1] === '"'){ c += '"'; i++; } else q = false; } else c += x; }
+    else if (x === '"') q = true;
+    else if (x === sep){ fila.push(c); c = ""; }
+    else if (x === "\n" || x === "\r"){ if (x === "\r" && t[i + 1] === "\n") i++; fila.push(c); c = ""; filas.push(fila); fila = []; }
+    else c += x;
+  }
+  if (c || fila.length){ fila.push(c); filas.push(fila); }
+  return filas.filter(f => f.some(x => x.trim()));
+}
+$("#bajar-xlsx").href = API + "/plantilla.xlsx";
+$("#bajar-csv").href = API + "/plantilla.csv";
+function llenarLista(pares){
+  if (pares.length > 500){ $("#err3").textContent = "El archivo tiene más de 500 pares. Divídelo en partes."; return false; }
+  if (!pares.length){ $("#err3").textContent = "No encontré pares en el archivo."; return false; }
+  $("#err3").textContent = "";
+  [...$("#lista-pares").children].forEach(c => { const v = c.leer(); if (!v.texto_es && !v.texto_rar) c.remove(); });
+  pares.forEach(p => agregarPar(p.texto_es, p.texto_rar, { documento: p.documento, area: p.area }));
+  return true;
+}
+$("#btn-csv").onclick = () => $("#csv").click();
+$("#csv").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  e.target.value = ""; $("#err3").textContent = "";
+  if (/\.xlsx$/i.test(f.name)){
+    const fd = new FormData(); fd.append("archivo", f);
+    try {
+      const d = await api("/leer-pares", { method: "POST", body: fd });
+      if (llenarLista(d.pares) && d.avisos.length) $("#err3").textContent = d.avisos.join(" ");
+    } catch(err){ $("#err3").textContent = err.message; }
+    return;
+  }
+  const lector = new FileReader();
+  lector.onload = () => {
+    const filas = leerCSV(lector.result), cab = (filas[0] || []).map(x => x.trim().toLowerCase());
+    const ies = cab.indexOf("texto_es"), irar = cab.indexOf("texto_rar"), idoc = cab.indexOf("documento"), iarea = cab.indexOf("area");
+    if (ies < 0 || irar < 0){ $("#err3").textContent = "El archivo debe tener las columnas texto_es y texto_rar en la primera fila."; return; }
+    llenarLista(filas.slice(1).map(r => ({ texto_es: (r[ies] || "").trim(), texto_rar: (r[irar] || "").trim(),
+      documento: idoc >= 0 ? (r[idoc] || "").trim() : null, area: iarea >= 0 ? (r[iarea] || "").trim() : null }))
+      .filter(p => (p.texto_es || p.texto_rar) && !/^EJEMPLO/i.test(p.texto_es)));
+  };
+  lector.readAsText(f);
+};
+
+$("#btn-entrenar").onclick = async () => {
+  const msg = $("#err3"); msg.textContent = ""; $("#ok3").textContent = "";
+  const revisor = $("#revisor").value.trim();
+  if (!revisor){ msg.textContent = "Escribe tu nombre arriba para firmar la carga."; return; }
+  if (!confianza.valor){ msg.textContent = "Elige el nivel de confianza en estrellas."; return; }
+  const pares = [...$("#lista-pares").children].map(c => c.leer()).filter(p => p.texto_es || p.texto_rar);
+  if (!pares.length){ msg.textContent = "Agrega al menos un par."; return; }
+  const mal = pares.findIndex(p => !p.texto_es || !p.texto_rar);
+  if (mal >= 0){ msg.textContent = "El par " + (mal + 1) + " está incompleto: falta el español o el rarámuri."; return; }
+  const cuerpo = { pares, estrellas: confianza.valor, revisor, documento: $("#doc-ent").value || null, area: $("#area-ent").value || null };
+  try {
+    const previa = await api("/entrenar", { method: "POST", body: JSON.stringify({ ...cuerpo, confirmar: false }) });
+    if (previa.nuevos + previa.conflictos === 0){ msg.textContent = "Todos los pares ya están en la base. No hay nada que agregar."; return; }
+    $("#dlg-texto").replaceChildren(
+      h("p", { textContent: "Vas a agregar " + previa.total + " par(es) a la base de datos:" }),
+      h("ul", {}, h("li", { textContent: previa.nuevos + " nuevo(s)" }),
+        h("li", { textContent: previa.duplicados + " repetido(s): se omiten" }),
+        h("li", { textContent: previa.conflictos + " con conflicto (el español ya tiene otra traducción validada): entran como pendientes" })),
+      h("p", { textContent: "Nivel de confianza: " + "★".repeat(confianza.valor) + ". " + textoConfianza(confianza.valor) + " Firmas como " + revisor + "." }));
+    const dlg = $("#dlg"); dlg.returnValue = "";
+    dlg.onclose = async () => {
+      if (dlg.returnValue !== "si") return;
+      try {
+        const r = await api("/entrenar", { method: "POST", body: JSON.stringify({ ...cuerpo, confirmar: true }) });
+        $("#ok3").textContent = "Listo: " + r.nuevos + " nuevo(s), " + r.conflictos + " con conflicto (pendientes) y " + r.duplicados + " repetido(s) omitidos.";
+        $("#lista-pares").replaceChildren(); agregarPar();
+      } catch(e){ msg.textContent = e.message; }
+    };
+    dlg.showModal();
+  } catch(e){ msg.textContent = e.message; }
+};
+
+// Indicadores
+async function cargarIndicadores(){
+  try {
+    const d = await api("/indicadores");
+    const datos = [["Referencias validadas", d.referencias_validadas], ["Borradores por revisar", d.borradores_pendientes],
+      ["Aceptables (sin corrección o con corrección menor)", d.pct_aceptables == null ? "—" : d.pct_aceptables + " %"],
+      ["Pares cargados (entrenamiento)", d.pares_cargados], ["Revisores activos", d.revisores_activos], ["Documentos", d.documentos],
+      ["Estrellas promedio", d.estrellas_promedio ?? "—"], ["Entradas del léxico CEEES", d.lexico_entradas]];
+    const crec = d.crecimiento_semanal.length
+      ? d.crecimiento_semanal.map(s => h("p", { textContent: s.semana + ": +" + s.nuevas + " (acumuladas: " + s.acumuladas + ")" }))
+      : [h("p", { className: "es", textContent: "Aún no hay crecimiento registrado." })];
+    $("#ind").replaceChildren(
+      h("div", { className: "grid" }, ...datos.map(([k, v]) => h("div", { className: "card" }, h("div", { className: "num", textContent: String(v) }), h("div", { className: "es", textContent: k })))),
+      h("div", { className: "card" }, h("strong", { textContent: "Crecimiento semanal de referencias" }), ...crec));
+  } catch(e){ $("#ind").replaceChildren(h("p", { className: "err", textContent: e.message })); }
+}
+$("#recargar").onclick = cargarIndicadores;
+</script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ani: kiosko del CEMPO (prototipo)</title>
+<style>
+:root{--bg:#F4E6D3;--panel:#FFF8EE;--ink:#3B2417;--muted:#6E5642;--line:#DDC3A5;--accent:#A8402A;--on:#FFF8EE;--ocre:#D99A2B;--tinta:#3B2417;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2A1810;--panel:#3A2418;--ink:#F6E7D2;--muted:#CDB296;--line:#5B3D2C;--accent:#E8825C;--on:#2A1810;--ocre:#E3A03A;--tinta:#2A1810}}
+:root[data-theme="dark"]{--bg:#2A1810;--panel:#3A2418;--ink:#F6E7D2;--muted:#CDB296;--line:#5B3D2C;--accent:#E8825C;--on:#2A1810;--ocre:#E3A03A;--tinta:#2A1810}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:26px/1.4 system-ui,sans-serif;-webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:4px solid var(--accent);outline-offset:3px}
+.marco{width:100%;height:100%;display:grid;place-items:center;overflow:hidden}
+.app{width:1920px;height:1080px;flex:none;display:flex;flex-direction:column;position:relative;overflow:hidden;outline:2px solid var(--line);transform:scale(var(--k,1));transform-origin:center}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding:16px 28px;border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:12px;font:400 34px Georgia,serif}
+.logo svg{width:56px}
+.proto{font-size:16px;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:4px 14px}
+.lang{display:flex;border:2px solid var(--line);border-radius:999px;overflow:hidden}
+.lang button{min-height:64px;padding:0 30px;border:0;background:none;font-size:26px;font-weight:600}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--on)}
+main{flex:1;display:grid;grid-template-columns:1.1fr 1fr;gap:28px;padding:24px 28px;align-items:center}
+
+.zona{display:flex;flex-direction:column;align-items:center;gap:26px}
+.bur{background:var(--panel);border:2px solid var(--line);border-radius:28px;padding:20px 36px;min-width:560px;max-width:900px;text-align:center;font:400 76px/1.1 Georgia,serif;position:relative;transition:opacity .35s}
+.bur.larga{font-size:40px;line-height:1.25}
+.bur::after{content:"";position:absolute;left:50%;bottom:-17px;width:28px;height:28px;background:var(--panel);border-right:2px solid var(--line);border-bottom:2px solid var(--line);transform:translateX(-50%) rotate(45deg)}
+.cap{display:block;font:500 22px system-ui;color:var(--muted);margin-top:4px}
+.cap:empty{display:none}
+.ani{width:440px}
+.sonrisa,.boca-o{transform-box:fill-box;transform-origin:center}
+.boca-o{display:none}
+[data-estado="speaking"] .boca-o{display:block;animation:habla .32s ease-in-out infinite alternate}
+[data-estado="speaking"] .sonrisa{display:none}
+.onda{opacity:.25}
+[data-estado="speaking"] .onda,[data-estado="listening"] .onda{animation:onda 1s ease-in-out infinite}
+.onda2{animation-delay:.25s!important}
+.ojos{transform-box:fill-box;transform-origin:center;animation:parpadeo 4.5s infinite}
+.barras{display:none;gap:8px;align-items:center;height:56px}
+[data-estado="listening"] .barras{display:flex}
+.barras i{width:10px;height:12px;border-radius:6px;background:var(--accent);animation:barra .8s ease-in-out infinite}
+.tiles{display:grid;gap:20px}
+.tile{display:flex;align-items:center;gap:32px;min-height:190px;padding:24px 36px;border-radius:28px;border:2px solid var(--line);background:var(--panel);text-align:left;font:600 44px/1.2 system-ui}
+.tile svg,.btn svg{width:64px;height:64px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tile svg{color:var(--accent);width:92px;height:92px}
+.tile small{display:block;font:400 28px system-ui;color:var(--muted)}
+.doc{background:var(--panel);border:2px solid var(--line);border-radius:24px;padding:24px 28px}
+.doc h2{font:400 44px Georgia,serif;margin:0 0 12px}
+.doc ol{margin:0 0 20px;padding-left:36px}
+.doc li{padding:8px 14px;border-radius:12px;font-size:32px}
+.doc li.leyendo{background:var(--ocre);color:var(--tinta)}
+.fila{display:flex;flex-wrap:wrap;gap:16px}
+footer{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:center;padding:20px 28px;border-top:1px solid var(--line)}
+.btn{display:flex;align-items:center;gap:14px;min-height:88px;padding:0 30px;border-radius:999px;border:2px solid var(--line);background:var(--panel);font:600 28px system-ui}
+.btn svg{width:44px;height:44px}
+.mic{min-height:112px;padding:0 48px;background:var(--accent);border-color:var(--accent);color:var(--on);font:700 40px system-ui}
+.mic svg{width:56px;height:56px}
+[data-estado="listening"] .mic{animation:latido 1.2s infinite}
+.ayuda{border-color:var(--accent);color:var(--accent)}
+.vol{display:flex;align-items:center;gap:8px}
+.vol .btn{padding:0;width:88px;justify-content:center;font-size:40px}
+#puntos{font-size:24px;letter-spacing:4px;min-width:130px;text-align:center}
+.velo{position:absolute;inset:0;background:rgba(20,10,5,.6);display:flex;align-items:center;justify-content:center;padding:24px}
+.tarjeta{background:var(--panel);border:2px solid var(--line);border-radius:32px;padding:48px;max-width:760px;text-align:center}
+.tarjeta h2{font:400 52px/1.15 Georgia,serif;margin:0 0 12px}
+.tres{display:flex;gap:12px;justify-content:center;margin:24px 0}
+.tres i{width:20px;height:20px;border-radius:50%;background:var(--accent);animation:onda 1.2s ease-in-out infinite}
+.tres i:nth-child(2){animation-delay:.2s}.tres i:nth-child(3){animation-delay:.4s}
+@keyframes parpadeo{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@keyframes habla{from{transform:scaleY(.4)}to{transform:scaleY(1)}}
+@keyframes onda{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes barra{0%,100%{height:12px}50%{height:52px}}
+@keyframes latido{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}50%{box-shadow:0 0 0 22px transparent}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}.onda{opacity:1}}
+</style>
+</head>
+<body>
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></symbol>
+  <symbol id="i-voz" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h8"/></symbol>
+  <symbol id="i-lugar" viewBox="0 0 24 24"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-persona" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></symbol>
+</svg>
+
+<div class="marco"><div class="app" data-estado="idle" data-lang="es">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 44 36" aria-hidden="true"><path d="M7 31 L19 6 L31 31" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.4 22 Q19 29.5 26.6 22" fill="none" stroke="var(--ocre)" stroke-width="4" stroke-linecap="round"/><circle cx="36" cy="10" r="3.5" fill="var(--ocre)"/></svg>
+      Aniriame
+    </div>
+    <span class="proto">Prototipo · el audio y los contenidos son de ejemplo</span>
+    <div class="lang" role="group" aria-label="Idioma">
+      <button data-l="es" aria-pressed="true">Español</button>
+      <button data-l="rar" aria-pressed="false">Rarámuri</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="zona">
+      <div class="bur" id="bur" aria-live="polite"><span id="txt">Hola</span><span class="cap" id="cap">Español</span></div>
+      <svg class="ani" viewBox="0 0 190 140" role="img" aria-label="Ani, la asistente">
+        <circle cx="70" cy="70" r="62" fill="var(--ocre)"/>
+        <circle cx="40" cy="86" r="9" fill="var(--accent)" fill-opacity=".35"/>
+        <circle cx="100" cy="86" r="9" fill="var(--accent)" fill-opacity=".35"/>
+        <g class="ojos"><ellipse cx="50" cy="60" rx="6" ry="8" fill="var(--tinta)"/><ellipse cx="90" cy="60" rx="6" ry="8" fill="var(--tinta)"/></g>
+        <path class="sonrisa" d="M50 88 Q70 106 90 88" fill="none" stroke="var(--tinta)" stroke-width="5" stroke-linecap="round"/>
+        <ellipse class="boca-o" cx="70" cy="94" rx="14" ry="11" fill="var(--tinta)"/>
+        <path class="onda" d="M138 52 Q150 70 138 88" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round"/>
+        <path class="onda onda2" d="M154 40 Q172 70 154 100" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round"/>
+      </svg>
+      <div class="barras" id="barras" aria-hidden="true"></div>
+    </section>
+
+    <section>
+      <div class="tiles" id="menu">
+        <button class="tile" id="t-doc"><svg><use href="#i-doc"/></svg><span>Ver un documento<small>Ani te lo muestra y te lo lee</small></span></button>
+        <button class="tile" id="t-info"><svg><use href="#i-lugar"/></svg><span>Dónde y cuándo<small>Dirección y horarios</small></span></button>
+      </div>
+      <div class="doc" id="doc" hidden>
+        <h2 id="doc-t"></h2>
+        <ol id="doc-l"></ol>
+        <div class="fila">
+          <button class="btn mic" id="leer" style="min-height:88px;font-size:32px"><svg><use href="#i-voz"/></svg>Escuchar</button>
+          <button class="btn" id="cerrar">Cerrar</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <button class="btn mic" id="mic"><svg><use href="#i-mic"/></svg><span id="mic-t">Toca y habla</span></button>
+    <button class="btn" id="otra"><svg><use href="#i-voz"/></svg>Escuchar otra vez</button>
+    <div class="vol" role="group" aria-label="Volumen">
+      <button class="btn" id="v-menos" aria-label="Bajar volumen">−</button>
+      <span id="puntos" aria-live="polite"></span>
+      <button class="btn" id="v-mas" aria-label="Subir volumen">+</button>
+    </div>
+    <button class="btn ayuda" id="ayuda"><svg><use href="#i-persona"/></svg>Pedir ayuda a una persona</button>
+  </footer>
+
+  <div class="velo" id="velo" role="dialog" aria-modal="true" aria-labelledby="velo-t" hidden>
+    <div class="tarjeta">
+      <h2 id="velo-t">Estamos avisando a una persona del CEMPO</h2>
+      <p>Espera aquí, ya viene a ayudarte.</p>
+      <div class="tres" aria-hidden="true"><i></i><i></i><i></i></div>
+      <button class="btn" id="cancelar" style="margin:0 auto">Cancelar</button>
+    </div>
+  </div>
+</div></div>
+
+<script>
+const $ = s => document.querySelector(s), app = $(".app"), sleep = ms => new Promise(r => setTimeout(r, ms));
+// Saludos que cambian solos. Para sumar otra lengua, agrega una línea aquí.
+// "Cuira" viene del léxico del CEEES y falta validarlo con la persona evaluadora.
+const SALUDOS = [{ l: "Español", t: "Hola" }, { l: "Rarámuri", t: "Cuira" }];
+const DOCS = {
+  doc:  { t: "Documento de ejemplo", l: ["Qué es", "Quién puede participar", "Fechas importantes", "Dónde entregar"] },
+  info: { t: "Dónde y cuándo (ejemplo)", l: ["Dirección del centro", "Horario de atención", "Qué traer"] }
+};
+let k = 0, vol = 3, ocupado = false, ultima = "", reloj;
+const estado = e => app.dataset.estado = e;
+const rar = () => app.dataset.lang === "rar";
+const resp = t => rar() ? "[Aquí Ani respondería en rarámuri]" : t;
+
+for (let i = 0; i < 9; i++){ const b = document.createElement("i"); b.style.animationDelay = (i * 0.09) + "s"; $("#barras").append(b); }
+
+function burbuja(t, c = "", larga = false){ $("#bur").classList.toggle("larga", larga); $("#txt").textContent = t; $("#cap").textContent = c; }
+function saludo(){ burbuja(SALUDOS[k].t, SALUDOS[k].l); }
+async function decir(t, ms){ estado("speaking"); ultima = t; burbuja(t, rar() ? "Rarámuri (ejemplo)" : "", true); await sleep(ms); }
+function fin(){ ocupado = false; estado("idle"); $("#mic-t").textContent = "Toca y habla"; saludo(); }
+
+// Saludo que cambia de idioma mientras Ani espera
+setInterval(async () => {
+  if (ocupado || app.dataset.estado !== "idle") return;
+  $("#bur").style.opacity = 0; await sleep(350);
+  if (ocupado) { $("#bur").style.opacity = 1; return; }
+  k = (k + 1) % SALUDOS.length; saludo(); $("#bur").style.opacity = 1;
+}, 3200);
+
+// Idioma
+function setLang(l){
+  app.dataset.lang = l;
+  document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.l === l)));
+}
+document.querySelectorAll(".lang button").forEach(b => b.onclick = () => { setLang(b.dataset.l); k = b.dataset.l === "es" ? 0 : 1; saludo(); });
+
+// Documentos
+function mostrarDoc(id){
+  const d = DOCS[id]; $("#doc-t").textContent = d.t;
+  $("#doc-l").replaceChildren(...d.l.map(x => { const li = document.createElement("li"); li.textContent = x + ": texto de ejemplo."; return li; }));
+  $("#menu").hidden = true; $("#doc").hidden = false;
+}
+function cerrarDoc(){ $("#doc").hidden = true; $("#menu").hidden = false; }
+async function leerDoc(){
+  if (ocupado) return; ocupado = true; estado("speaking");
+  for (const li of $("#doc-l").children){
+    li.classList.add("leyendo"); ultima = li.textContent;
+    burbuja(rar() ? "[Aquí Ani leería en rarámuri]" : li.textContent, "Leyendo…", true);
+    await sleep(1800); li.classList.remove("leyendo");
+  }
+  fin();
+}
+async function abrir(id){ if (ocupado) return; mostrarDoc(id); ocupado = true; await decir(resp("Aquí está. Toca Escuchar y te lo leo."), 2600); fin(); }
+$("#t-doc").onclick = () => abrir("doc"); $("#t-info").onclick = () => abrir("info");
+$("#cerrar").onclick = cerrarDoc; $("#leer").onclick = leerDoc;
+
+// Micrófono (simulado): escucha, piensa, responde y muestra un documento
+async function escuchar(){
+  if (ocupado) return; ocupado = true; cerrarDoc();
+  estado("listening"); burbuja("Te escucho…"); $("#mic-t").textContent = "Te escucho…"; await sleep(2600);
+  estado("thinking"); burbuja("Pensando…"); await sleep(1100);
+  mostrarDoc("doc");
+  await decir(resp("Te muestro un documento de ejemplo. Puedo leértelo o avisar a una persona."), 4200);
+  fin();
+}
+$("#mic").onclick = escuchar;
+$("#otra").onclick = async () => { if (ocupado) return; ocupado = true; await decir(ultima || resp("Hola, soy Ani."), 2800); fin(); };
+
+// Volumen (simulado)
+function puntos(){ $("#puntos").textContent = "●".repeat(vol) + "○".repeat(5 - vol); $("#puntos").setAttribute("aria-label", "Volumen " + vol + " de 5"); }
+$("#v-menos").onclick = () => { vol = Math.max(0, vol - 1); puntos(); };
+$("#v-mas").onclick = () => { vol = Math.min(5, vol + 1); puntos(); };
+puntos();
+
+// Ayuda de una persona
+$("#ayuda").onclick = () => { $("#velo").hidden = false; $("#cancelar").focus(); };
+$("#cancelar").onclick = () => { $("#velo").hidden = true; };
+
+// Si nadie toca la pantalla en 45 segundos, vuelve al inicio
+function reiniciar(){ ocupado = false; cerrarDoc(); $("#velo").hidden = true; setLang("es"); k = 0; fin(); }
+document.addEventListener("pointerdown", () => { clearTimeout(reloj); reloj = setTimeout(reiniciar, 45000); });
+// Pantalla horizontal de 1920 × 1080: se ajusta al tamaño de la ventana sin deformarse
+function ajustar(){ const m = $(".marco"); app.style.setProperty("--k", Math.min(m.clientWidth / 1920, m.clientHeight / 1080)); }
+addEventListener("resize", ajustar); ajustar();
+saludo();
+</script>
+</body>
+</html>
