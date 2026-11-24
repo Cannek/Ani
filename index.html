@@ -1,0 +1,23 @@
+@'
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ani - Demostraciones</title>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px; background: #f4f4f9; margin: 0; }
+    a { padding: 15px 30px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; width: 220px; text-align: center; }
+    a:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <h1>Selecciona una versión</h1>
+  <a href="./Ani%20PC/">Ani PC (Principal)</a>
+  <a href="./Ani%20Kiosk/">Ani Kiosk (Prototipo)</a>
+</body>
+</html>
+'@ | Out-File -FilePath "index.html" -Encoding utf8
+git add index.html
+git commit -m "Actualiza index.html con botones de navegacion"
+git push
