@@ -1,7 +1,7 @@
 """
 Servidor de Aniriame (versión 0.2).
 
-Conecta la base de datos (aniriame.db) con el exterior. No traduce por sí mismo:
+Conecta la base de datos (Postgres en Supabase, via DATABASE_URL) con el exterior. No traduce por sí mismo:
 usa el motor de motor.py, que por ahora es un marcador de prueba.
 
 Para encenderlo:   uvicorn main:app --reload
@@ -21,15 +21,14 @@ import extraccion
 import motor
 import plantilla
 
-RUTA_DB = os.environ.get("ANIRIAME_DB", "aniriame.db")
 TOKEN = os.environ.get("ANIRIAME_TOKEN")  # si se define, las rutas que escriben piden este token
 
 @asynccontextmanager
 async def ciclo_de_vida(app):
     # Al encender, comprobamos que la base de datos exista y tenga sus tablas
-    con = db.conectar(RUTA_DB)
+    con = db.conectar()
     try:
-        db.verificar_base(con, RUTA_DB)
+        db.verificar_base(con)
     finally:
         con.close()
     yield
@@ -37,12 +36,14 @@ async def ciclo_de_vida(app):
 
 app = FastAPI(title="Aniriame", version="0.2", lifespan=ciclo_de_vida)
 
-# Para pruebas se permite todo origen. Antes de usarlo en serio, limitarlo a la dirección de la página.
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+# Solo se permiten estos orígenes (la página se sirve desde el mismo servidor, así que no hace falta más).
+# Para otro dominio: ANIRIAME_ORIGENES=https://tu-dominio.com
+ORIGENES = [o.strip() for o in os.environ.get("ANIRIAME_ORIGENES", "http://127.0.0.1:8000,http://localhost:8000").split(",") if o.strip()]
+app.add_middleware(CORSMiddleware, allow_origins=ORIGENES, allow_methods=["*"], allow_headers=["*"])
 
 
 def get_con():
-    con = db.conectar(RUTA_DB)
+    con = db.conectar()
     try:
         yield con
     finally:

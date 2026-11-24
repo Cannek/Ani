@@ -1,13 +1,21 @@
 """
 Funciones de Aniriame: búsqueda, pares de traducción y revisión humana.
-Se usa junto con la base aniriame.db (ver build_db.py).
+La base de datos es Postgres (Supabase). La conexión se configura con la variable
+DATABASE_URL (en un archivo .env local o en las variables de entorno de Vercel).
 """
 import csv
 import difflib
 import os
 import re
-import sqlite3
 import unicodedata
+
+import psycopg
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+except ImportError:
+    pass
 
 
 # ---------- Normalización para buscar sin importar acentos, mayúsculas ni plurales simples ----------
@@ -33,27 +41,27 @@ def clave(texto):
 TABLAS_NECESARIAS = {"entradas", "significados", "pares_traduccion", "revisiones"}
 
 
-def conectar(ruta="aniriame.db"):
-    # SQLite crea un archivo vacío si no encuentra el que buscamos. Para evitarlo, lo comprobamos antes.
-    if not os.path.exists(ruta):
-        raise FileNotFoundError(
-            f"No encuentro la base de datos. La busqué aquí: {os.path.abspath(ruta)}\n"
-            "Debe estar en la misma carpeta desde donde enciendes el servidor."
+def conectar(ruta=None):
+    """Abre una conexión a Postgres con DATABASE_URL. El argumento 'ruta' se ignora (era del SQLite)."""
+    url = os.environ.get("DATABASE_URL")
+    if not url:
+        raise RuntimeError(
+            "Falta la variable DATABASE_URL (la cadena de conexión de Supabase). "
+            "Ponla en el archivo .env o en las variables de entorno de Vercel."
         )
-    # check_same_thread=False permite usarla desde el servidor web
-    return sqlite3.connect(ruta, check_same_thread=False)
+    # prepare_threshold=None: necesario con el pooler de transacciones de Supabase (puerto 6543)
+    return psycopg.connect(url, prepare_threshold=None)
 
 
-def verificar_base(con, ruta="aniriame.db"):
+def verificar_base(con, ruta=None):
     """Comprueba que la base tenga las tablas esperadas, y si no, avisa con claridad."""
-    tablas = {f[0] for f in con.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    tablas = {f[0] for f in con.execute(
+        "SELECT table_name FROM information_schema.tables WHERE table_schema='public'")}
     faltan = TABLAS_NECESARIAS - tablas
     if faltan:
         raise RuntimeError(
-            f"La base de datos {os.path.abspath(ruta)} está vacía o es incorrecta "
-            f"(faltan las tablas: {', '.join(sorted(faltan))}).\n"
-            "Apaga el servidor, borra ese archivo, copia aquí el aniriame.db correcto "
-            "(unos 650 KB) o corre build_db.py, y vuelve a encender."
+            "La base de datos de Supabase no tiene las tablas esperadas "
+            f"(faltan: {', '.join(sorted(faltan))}). Aplica schema.sql y corre migrar_a_postgres.py."
         )
 
 
@@ -64,7 +72,7 @@ def buscar(con, consulta, limite=10):
     if not q:
         return []
     tokens = q.split()
-    filtro = " OR ".join(["s.significado_norm LIKE ?"] * len(tokens))
+    filtro = " OR ".join(["s.significado_norm LIKE %s"] * len(tokens))
     filas = con.execute(
         f"""SELECT e.id_registro, e.palabra_raramuri, e.clase, e.variantes,
                    e.ejemplos_y_comentarios, e.estado_validacion,
@@ -110,21 +118,22 @@ def agregar_par(con, texto_es, texto_rar, tipo="frase", origen="institucional",
     texto_rar = texto_rar.strip()
     if estado == "validado":  # evitar duplicar una referencia idéntica
         dup = con.execute(
-            "SELECT id FROM pares_traduccion WHERE texto_es_norm=? AND texto_rar=? AND estado='validado'",
+            "SELECT id FROM pares_traduccion WHERE texto_es_norm=%s AND texto_rar=%s AND estado='validado'",
             (norm, texto_rar),
         ).fetchone()
         if dup:
             return dup[0]
-    cur = con.execute(
+    nuevo_id = con.execute(
         """INSERT INTO pares_traduccion
            (tipo, texto_es, texto_es_norm, texto_rar, origen, documento, area,
             estado, validado_por, par_original_id)
-           VALUES (?,?,?,?,?,?,?,?,?,?)""",
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+           RETURNING id""",
         (tipo, texto_es.strip(), norm, texto_rar, origen, documento, area,
          estado, validado_por, par_original_id),
-    )
+    ).fetchone()[0]
     con.commit()
-    return cur.lastrowid
+    return nuevo_id
 
 
 def importar_pares_csv(con, ruta_csv, origen="institucional", estado="pendiente", validado_por=None):
@@ -157,7 +166,7 @@ def buscar_frase(con, texto_es, k=3, minimo=0.3):
     n = clave(texto_es)
     exacta = con.execute(
         "SELECT id, texto_es, texto_rar FROM pares_traduccion "
-        "WHERE texto_es_norm=? AND estado='validado' ORDER BY id DESC LIMIT 1", (n,)
+        "WHERE texto_es_norm=%s AND estado='validado' ORDER BY id DESC LIMIT 1", (n,)
     ).fetchone()
     tokens = set(n.split())
     parecidos = []
@@ -190,7 +199,7 @@ def registrar_revision(con, par_id, estrellas, revisor, correccion=None):
     if not 0 <= estrellas <= 5:
         raise ValueError("Las estrellas van de 0 a 5")
     par = con.execute(
-        "SELECT tipo, texto_es, texto_rar, area, documento FROM pares_traduccion WHERE id=?", (par_id,)
+        "SELECT tipo, texto_es, texto_rar, area, documento FROM pares_traduccion WHERE id=%s", (par_id,)
     ).fetchone()
     if par is None:
         raise ValueError("No existe ese par")
@@ -198,7 +207,7 @@ def registrar_revision(con, par_id, estrellas, revisor, correccion=None):
     correccion = (correccion or "").strip()
 
     con.execute(
-        "INSERT INTO revisiones (par_id, estrellas, correccion, revisor) VALUES (?,?,?,?)",
+        "INSERT INTO revisiones (par_id, estrellas, correccion, revisor) VALUES (%s,%s,%s,%s)",
         (par_id, estrellas, correccion or None, revisor),
     )
 
@@ -206,16 +215,16 @@ def registrar_revision(con, par_id, estrellas, revisor, correccion=None):
         nuevo = agregar_par(con, texto_es, correccion, tipo=tipo, origen="correccion",
                             documento=documento, area=area, estado="validado",
                             validado_por=revisor, par_original_id=par_id)
-        con.execute("UPDATE pares_traduccion SET estado='corregido' WHERE id=?", (par_id,))
+        con.execute("UPDATE pares_traduccion SET estado='corregido' WHERE id=%s", (par_id,))
         con.commit()
         return nuevo
     if estrellas == 5:
-        con.execute("UPDATE pares_traduccion SET estado='validado', validado_por=? WHERE id=?",
+        con.execute("UPDATE pares_traduccion SET estado='validado', validado_por=%s WHERE id=%s",
                     (revisor, par_id))
         con.commit()
         return par_id
     estado = "revisado" if estrellas >= 3 else "rechazado"
-    con.execute("UPDATE pares_traduccion SET estado=? WHERE id=?", (estado, par_id))
+    con.execute("UPDATE pares_traduccion SET estado=%s WHERE id=%s", (estado, par_id))
     con.commit()
     return None
 
@@ -255,7 +264,7 @@ def pendientes(con, limite=50):
     """Borradores que esperan revisión de la persona evaluadora."""
     filas = con.execute(
         "SELECT id, tipo, texto_es, texto_rar, documento, area, fecha FROM pares_traduccion "
-        "WHERE estado='borrador' ORDER BY id LIMIT ?", (limite,)
+        "WHERE estado='borrador' ORDER BY id LIMIT %s", (limite,)
     ).fetchall()
     return [dict(zip(("id", "tipo", "texto_es", "texto_rar", "documento", "area", "fecha"), f)) for f in filas]
 
@@ -266,7 +275,7 @@ def indicadores(con, umbral_correccion_menor=0.9):
     pct_aceptables = de los borradores del sistema que ya se revisaron, qué porcentaje
     quedó sin corrección (con 4 o 5 estrellas) o con una corrección menor
     (el texto corregido se parece al original en al menos el umbral, 90% por defecto)."""
-    q = lambda sql, *a: con.execute(sql, a).fetchone()[0]
+    q = lambda sql, *a: con.execute(sql, a).fetchone()[0]  # sin parametros en estas consultas
     r = {
         "lexico_entradas": q("SELECT COUNT(*) FROM entradas WHERE es_nota=0"),
         "referencias_validadas": q("SELECT COUNT(*) FROM pares_traduccion WHERE estado='validado'"),
@@ -274,7 +283,7 @@ def indicadores(con, umbral_correccion_menor=0.9):
         "documentos": q("SELECT COUNT(DISTINCT documento) FROM pares_traduccion WHERE documento IS NOT NULL"),
         "revisiones": q("SELECT COUNT(*) FROM revisiones"),
         "revisores_activos": q("SELECT COUNT(DISTINCT revisor) FROM revisiones"),
-        "estrellas_promedio": q("SELECT ROUND(AVG(estrellas), 2) FROM revisiones"),
+        "estrellas_promedio": q("SELECT ROUND(AVG(estrellas), 2)::float FROM revisiones"),
     }
     r["referencias_por_origen"] = dict(con.execute(
         "SELECT origen, COUNT(*) FROM pares_traduccion WHERE estado='validado' GROUP BY origen").fetchall())
@@ -294,7 +303,7 @@ def indicadores(con, umbral_correccion_menor=0.9):
 
     semanas, acumulado = [], 0
     for semana, n in con.execute(
-        "SELECT strftime('%Y-S%W', fecha), COUNT(*) FROM pares_traduccion WHERE estado='validado' "
+        "SELECT to_char(fecha, 'IYYY') || '-S' || to_char(fecha, 'IW'), COUNT(*) FROM pares_traduccion WHERE estado='validado' "
         "AND origen IN ('sistema', 'correccion') GROUP BY 1 ORDER BY 1"):
         acumulado += n
         semanas.append({"semana": semana, "nuevas": n, "acumuladas": acumulado})
