@@ -229,6 +229,59 @@ def registrar_revision(con, par_id, estrellas, revisor, correccion=None):
     return None
 
 
+def cargar_pares(con, pares, estrellas, revisor, documento=None, area=None, aplicar=False):
+    """Carga pares ya traducidos (español y rarámuri), con un nivel de confianza en estrellas.
+
+    - 5 estrellas: referencia validada (se usa como ejemplo para traducir).
+    - 3 o 4: queda como 'revisado' (no se usa como ejemplo). 1 o 2: queda 'pendiente'.
+    - Repetidos (mismo español y mismo rarámuri ya en la base, o repetidos en la carga): se omiten.
+    - Conflicto: si el español ya tiene OTRA traducción validada, el par entra como 'pendiente',
+      para que una persona decida y no se reemplace en silencio una referencia.
+    Con aplicar=False solo devuelve la vista previa (no escribe nada).
+    Devuelve {total, nuevos, duplicados, conflictos}."""
+    estado_base = "validado" if estrellas == 5 else ("revisado" if estrellas >= 3 else "pendiente")
+    nuevos = duplicados = conflictos = 0
+    vistos = set()
+    try:
+        for par in pares:
+            es, rar = par["texto_es"].strip(), par["texto_rar"].strip()
+            norm = clave(es)
+            if not es or not rar or not norm:
+                duplicados += 1
+                continue
+            llave = (norm, rar)
+            existe = con.execute(
+                "SELECT 1 FROM pares_traduccion WHERE texto_es_norm=%s AND texto_rar=%s "
+                "AND estado IN ('validado','revisado','pendiente','corregido') LIMIT 1", llave).fetchone()
+            if llave in vistos or existe:
+                duplicados += 1
+                continue
+            vistos.add(llave)
+            estado = estado_base
+            if con.execute(
+                "SELECT 1 FROM pares_traduccion WHERE texto_es_norm=%s AND estado='validado' "
+                "AND texto_rar<>%s LIMIT 1", llave).fetchone():
+                conflictos += 1
+                estado = "pendiente"
+            else:
+                nuevos += 1
+            if aplicar:
+                con.execute(
+                    """INSERT INTO pares_traduccion
+                       (tipo, texto_es, texto_es_norm, texto_rar, origen, documento, area, estado, validado_por)
+                       VALUES (%s,%s,%s,%s,'carga',%s,%s,%s,%s)""",
+                    (tipo_de(es), es, norm, rar, par.get("documento") or documento,
+                     par.get("area") or area, estado, revisor))  # la carga queda firmada por quien la hizo
+        if aplicar:
+            con.commit()
+        else:
+            con.rollback()
+    except Exception:
+        con.rollback()
+        raise
+    return {"total": len(pares), "nuevos": nuevos, "duplicados": duplicados, "conflictos": conflictos}
+
+
 # ---------- 4. Apoyos para el servidor ----------
 
 def dividir_parrafos(texto):
@@ -281,6 +334,7 @@ def indicadores(con, umbral_correccion_menor=0.9):
         "referencias_validadas": q("SELECT COUNT(*) FROM pares_traduccion WHERE estado='validado'"),
         "borradores_pendientes": q("SELECT COUNT(*) FROM pares_traduccion WHERE estado='borrador'"),
         "documentos": q("SELECT COUNT(DISTINCT documento) FROM pares_traduccion WHERE documento IS NOT NULL"),
+        "pares_cargados": q("SELECT COUNT(*) FROM pares_traduccion WHERE origen='carga'"),
         "revisiones": q("SELECT COUNT(*) FROM revisiones"),
         "revisores_activos": q("SELECT COUNT(DISTINCT revisor) FROM revisiones"),
         "estrellas_promedio": q("SELECT ROUND(AVG(estrellas), 2)::float FROM revisiones"),
